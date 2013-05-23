@@ -1,0 +1,80 @@
+<project name="StackSetter_Build" basedir="." default="main">
+    <property name="mod.id" value="stacksetter" />
+    <property name="mod.longid" value="Stack Setter" />
+    <property name="version" value="0.0.0" />
+    <property name="mcp.dir" value="../forge/mcp" />
+    
+    <!-- Source Directory -->
+    <property name="src.dir" location="./src" />
+    <!-- Resources Directory -->
+    <property name="resource.dir" location="./mods" />
+    <!-- Build Directory -->
+    <property name="build.dir" location="${mcp.dir}/reobf/minecraft" />
+    <!-- Python Directory -->
+    <property name="python" location="${mcp.dir}/runtime/bin/python/python_mcp.exe" />
+    
+    <!-- Pre-Comoile Setup -->
+    <target name="initialize" description="Setup source to be compiled and obfuscated">
+        <echo message="Backing up original minecraft src" />
+        <mkdir dir="${mcp.dir}/src_bak" />
+        <copy todir="${mcp.dir}/src_bak">
+            <fileset dir="${mcp.dir}/src"/>
+        </copy>
+        <echo message=" " />
+        <echo message=" " />
+        <echo message="Copying mod source into mcp minecraft src" />
+        <copy todir="${mcp.dir}/src/minecraft">
+            <fileset dir="${src.dir}"/>
+        </copy>
+    </target>
+    
+    <!-- MCP Recompile -->
+    <target name="recompile" description="MCP recompile" >
+        <exec executable="${python}" dir="${mcp.dir}">
+            <arg value="runtime/recompile.py"/>
+            <arg value="%*"/>
+        </exec>
+    </target>
+    
+    <!-- MCP Reobfuscate -->
+    <target name="reobfuscate" description="MCP reobfuscate" >
+        <exec executable="${python}" dir="${mcp.dir}">
+            <arg value="runtime/reobfuscate.py"/>
+            <arg value="--srgnames"/>
+            <arg value="%*"/>
+        </exec>
+    </target>
+    
+    <!-- Using Reobfuscate Folder, Construct Pakcage -->
+    <target name="package" description="Setup source to be compiled and obfuscated">
+        <echo message="Copy Obfuscated source into package directory"/>
+        <mkdir dir="${build.dir}/SETUP/${mod.longid}/${mod.id}"/>
+        <copy todir="${build.dir}/SETUP/${mod.longid}/${mod.id}">
+            <fileset dir="${build.dir}/${mod.id}"/>
+        </copy>
+        <echo message=" " />
+        <echo message="Creaeting Zip"/>
+        <zip destfile="${build.dir}/SETUP/${mod.longid}v${version}.zip">
+            <fileset dir="${build.dir}/SETUP/${mod.longid}"/>
+        </zip>
+    </target>
+    
+    <!-- Using Reobfuscate Folder, Construct Pakcage -->
+    <target name="cleanup" description="Remove">
+        <echo message=" " />
+        <echo message="Delete Altered MCP Source"/>
+        <delete dir="${mcp.dir}/src" />
+        
+        <echo message=" " />
+        <echo message="Recreate from Backup"/>
+        <copy todir="${mcp.dir}/src">
+            <fileset dir="${mcp.dir}/src_bak"/>
+        </copy>
+        
+        <echo message=" " />
+        <echo message="Delete Backup"/>
+        <delete dir="${mcp.dir}/src_bak" />
+    </target>
+    
+    <target name="main" depends="initialize,recompile,reobfuscate,package,cleanup"/>
+</project>
